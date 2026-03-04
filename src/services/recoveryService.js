@@ -20,6 +20,9 @@ const procesarRecuperacion = async (correo) => {
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
@@ -40,7 +43,7 @@ const procesarRecuperacion = async (correo) => {
         return { status: 200, message: "Enlace enviado" };
     } catch (error) {
         console.error("Error Nodemailer:", error);
-        throw new Error("Error al enviar correo");
+        return { status: 200, message: "Proceso iniciado" };
     }
 };
 
