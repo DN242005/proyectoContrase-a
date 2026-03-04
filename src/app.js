@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors'); // 1. Movido arriba
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const db = require('./config/db');
@@ -10,33 +9,37 @@ const app = express();
 
 // --- CONFIGURACIÓN GLOBAL (Debe ir ANTES de las rutas) ---
 const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)
     : ['*'];
 
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin) {
-            callback(null, true);
-            return;
-        }
+app.use((req, res, next) => {
+    const requestOrigin = req.headers.origin;
+    let allowOrigin = '';
 
-        if (corsOrigins.includes('*')) {
-            callback(null, true);
-            return;
-        }
-
-        const normalizedOrigin = origin.replace(/\/$/, '');
+    if (corsOrigins.includes('*')) {
+        allowOrigin = requestOrigin || '*';
+    } else if (requestOrigin) {
+        const normalizedOrigin = requestOrigin.replace(/\/$/, '');
         const isAllowed = corsOrigins.some((allowedOrigin) => allowedOrigin.replace(/\/$/, '') === normalizedOrigin);
+        if (isAllowed) {
+            allowOrigin = requestOrigin;
+        }
+    }
 
-        callback(null, isAllowed);
-    },
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    optionsSuccessStatus: 204,
-};
+    if (allowOrigin) {
+        res.header('Access-Control-Allow-Origin', allowOrigin);
+        res.header('Vary', 'Origin');
+    }
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+
+    return next();
+});
 app.use(express.json()); // ✅ Permite leer los datos JSON que envía React
 
 app.get('/api/health', (req, res) => {
