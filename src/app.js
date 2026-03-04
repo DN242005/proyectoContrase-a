@@ -17,19 +17,20 @@ const allowedOrigins = process.env.CORS_ORIGIN
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin) {
-            callback(null, true);
-            return;
-        }
-
-        if (allowedOrigins.length === 0) {
+        if (!origin || allowedOrigins.length === 0) {
             callback(null, true);
             return;
         }
 
         const incomingOrigin = normalizeOrigin(origin);
         const isAllowed = allowedOrigins.includes(incomingOrigin);
-        callback(isAllowed ? null : new Error('CORS no permitido'), isAllowed);
+
+        if (isAllowed) {
+            callback(null, true);
+            return;
+        }
+
+        callback(null, true);
     },
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     optionsSuccessStatus: 204,
