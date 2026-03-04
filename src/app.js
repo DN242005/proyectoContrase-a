@@ -9,11 +9,34 @@ const passwordController = require('./controllers/passwordController');
 const app = express();
 
 // --- CONFIGURACIÓN GLOBAL (Debe ir ANTES de las rutas) ---
-const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
-    : ['*'];
+const normalizeOrigin = (origin) => (origin || '').trim().replace(/\/$/, '').toLowerCase();
 
-app.use(cors({ origin: corsOrigins }));
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(normalizeOrigin).filter(Boolean)
+    : [];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin) {
+            callback(null, true);
+            return;
+        }
+
+        if (allowedOrigins.length === 0) {
+            callback(null, true);
+            return;
+        }
+
+        const incomingOrigin = normalizeOrigin(origin);
+        const isAllowed = allowedOrigins.includes(incomingOrigin);
+        callback(isAllowed ? null : new Error('CORS no permitido'), isAllowed);
+    },
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json()); // ✅ Permite leer los datos JSON que envía React
 
 app.get('/api/health', (req, res) => {
