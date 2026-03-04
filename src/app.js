@@ -13,23 +13,8 @@ const corsOrigins = process.env.CORS_ORIGIN
     : ['*'];
 
 app.use((req, res, next) => {
-    const requestOrigin = req.headers.origin;
-    let allowOrigin = '';
-
-    if (corsOrigins.includes('*')) {
-        allowOrigin = requestOrigin || '*';
-    } else if (requestOrigin) {
-        const normalizedOrigin = requestOrigin.replace(/\/$/, '');
-        const isAllowed = corsOrigins.some((allowedOrigin) => allowedOrigin.replace(/\/$/, '') === normalizedOrigin);
-        if (isAllowed) {
-            allowOrigin = requestOrigin;
-        }
-    }
-
-    if (allowOrigin) {
-        res.header('Access-Control-Allow-Origin', allowOrigin);
-        res.header('Vary', 'Origin');
-    }
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Vary', 'Origin');
 
     res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
