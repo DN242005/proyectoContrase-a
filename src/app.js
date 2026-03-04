@@ -31,6 +31,25 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+app.get('/api/admin/users', async (req, res) => {
+    const debugKey = req.headers['x-debug-key'] || req.query.key;
+
+    if (!process.env.ADMIN_DEBUG_KEY || debugKey !== process.env.ADMIN_DEBUG_KEY) {
+        return res.status(401).json({ message: 'No autorizado.' });
+    }
+
+    try {
+        const result = await db.query(
+            'SELECT id, nombre, correo FROM usuarios ORDER BY id DESC LIMIT 100'
+        );
+
+        return res.json({ total: result.rows.length, usuarios: result.rows });
+    } catch (error) {
+        console.error('Error al consultar usuarios:', error);
+        return res.status(500).json({ message: 'Error al consultar usuarios.' });
+    }
+});
+
 // --- RUTAS DE AUTENTICACIÓN ---
 
 // 1. Registro: Guarda nombre, correo y contraseña en Docker
