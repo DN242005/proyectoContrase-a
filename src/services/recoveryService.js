@@ -33,6 +33,10 @@ const procesarRecuperacion = async (correo) => {
     const enlace = `${frontendUrl}/?token=${token}`;
 
     try {
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            throw new Error('SMTP no configurado en variables de entorno.');
+        }
+
         await transporter.sendMail({
             from: `"Sistema Académico UV" <${process.env.SMTP_USER}>`,
             to: correo,
@@ -43,7 +47,13 @@ const procesarRecuperacion = async (correo) => {
         return { status: 200, message: "Enlace enviado" };
     } catch (error) {
         console.error("Error Nodemailer:", error);
-        return { status: 200, message: "Proceso iniciado" };
+
+        await db.query(
+            'DELETE FROM tokens_restablecimiento WHERE token = $1',
+            [token]
+        );
+
+        return { status: 500, message: "Error al enviar correo" };
     }
 };
 
