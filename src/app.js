@@ -9,35 +9,29 @@ const passwordController = require('./controllers/passwordController');
 const app = express();
 
 // --- CONFIGURACIÓN GLOBAL (Debe ir ANTES de las rutas) ---
-const normalizeOrigin = (origin) => (origin || '').trim().replace(/\/$/, '').toLowerCase();
-
-const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(normalizeOrigin).filter(Boolean)
-    : [];
+const corsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : ['*'];
 
 const corsOptions = {
     origin: (origin, callback) => {
         if (!origin) {
-            callback(null, '*');
+            callback(null, true);
             return;
         }
 
-        if (allowedOrigins.length === 0) {
-            callback(null, origin);
+        if (corsOrigins.includes('*')) {
+            callback(null, true);
             return;
         }
 
-        const incomingOrigin = normalizeOrigin(origin);
-        const isAllowed = allowedOrigins.includes(incomingOrigin);
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        const isAllowed = corsOrigins.some((allowedOrigin) => allowedOrigin.replace(/\/$/, '') === normalizedOrigin);
 
-        if (isAllowed) {
-            callback(null, origin);
-            return;
-        }
-
-        callback(null, origin);
+        callback(null, isAllowed);
     },
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 204,
 };
 
