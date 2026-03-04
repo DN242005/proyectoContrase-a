@@ -13,7 +13,12 @@ const solicitarEnlace = async (req, res) => {
         const resultado = await recoveryService.procesarRecuperacion(correo);
 
         // 3. Respuesta al usuario
-        // Mantenemos el mensaje genérico por seguridad, tal como se pidió en clase
+        if (resultado.status >= 500) {
+            return res.status(resultado.status).json({
+                message: resultado.message || 'Error al enviar correo de recuperación.'
+            });
+        }
+
         return res.status(resultado.status).json({ 
             message: "Si el correo está registrado, recibirás un enlace de recuperación en breve." 
         });
