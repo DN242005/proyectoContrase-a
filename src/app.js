@@ -56,12 +56,19 @@ app.get('/api/admin/users', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
     const { nombre, correo, password } = req.body;
     try {
+        const correoNormalizado = String(correo || '').trim().toLowerCase();
+        const nombreNormalizado = String(nombre || '').trim();
+
+        if (!correoNormalizado || !password || !nombreNormalizado) {
+            return res.status(400).json({ message: 'Nombre, correo y contraseña son requeridos.' });
+        }
+
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
         await db.query(
             'INSERT INTO usuarios (nombre, correo, password) VALUES ($1, $2, $3)', 
-            [nombre, correo, passwordHash]
+            [nombreNormalizado, correoNormalizado, passwordHash]
         );
         res.json({ message: "¡Usuario registrado con éxito en la base de datos!" });
     } catch (error) {
@@ -74,9 +81,11 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     const { correo, password } = req.body;
     try {
+        const correoNormalizado = String(correo || '').trim().toLowerCase();
+
         const result = await db.query(
             'SELECT * FROM usuarios WHERE correo = $1', 
-            [correo]
+            [correoNormalizado]
         );
 
         if (result.rows.length === 0) {

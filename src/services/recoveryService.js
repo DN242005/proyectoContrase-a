@@ -4,7 +4,8 @@ const crypto = require('crypto');
 
 // FUNCIÓN 1: Para enviar el correo
 const procesarRecuperacion = async (correo) => {
-    const userRes = await db.query('SELECT id FROM usuarios WHERE correo = $1', [correo]);
+    const correoNormalizado = String(correo || '').trim().toLowerCase();
+    const userRes = await db.query('SELECT id FROM usuarios WHERE correo = $1', [correoNormalizado]);
     
     if (userRes.rows.length === 0) {
         return { status: 200, message: "Proceso iniciado" }; 
@@ -39,11 +40,11 @@ const procesarRecuperacion = async (correo) => {
 
         await transporter.sendMail({
             from: `"Sistema Académico UV" <${process.env.SMTP_USER}>`,
-            to: correo,
+            to: correoNormalizado,
             subject: "Recuperación de Contraseña - Proyecto UV",
             html: `<p>Haz clic para cambiar tu clave: <a href="${enlace}">Cambiar contraseña</a></p>`
         });
-        console.log(`📧 Correo enviado a ${correo}`);
+        console.log(`📧 Correo enviado a ${correoNormalizado}`);
         return { status: 200, message: "Enlace enviado" };
     } catch (error) {
         console.error("Error Nodemailer:", error);
