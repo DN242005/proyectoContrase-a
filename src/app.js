@@ -17,8 +17,13 @@ const allowedOrigins = process.env.CORS_ORIGIN
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.length === 0) {
-            callback(null, true);
+        if (!origin) {
+            callback(null, '*');
+            return;
+        }
+
+        if (allowedOrigins.length === 0) {
+            callback(null, origin);
             return;
         }
 
@@ -26,11 +31,11 @@ const corsOptions = {
         const isAllowed = allowedOrigins.includes(incomingOrigin);
 
         if (isAllowed) {
-            callback(null, true);
+            callback(null, origin);
             return;
         }
 
-        callback(null, true);
+        callback(null, origin);
     },
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     optionsSuccessStatus: 204,
